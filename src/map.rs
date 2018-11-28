@@ -980,6 +980,7 @@ where
     /// so that the map now contains keys which compare equal, search may start
     /// acting erratically, with two keys randomly masking each other. Implementations
     /// are free to assume this doesn't happen (within the limits of memory-safety).
+    #[inline]
     pub fn raw_entry_mut(&mut self) -> RawEntryBuilderMut<K, V, S> {
         self.reserve(1);
         RawEntryBuilderMut { map: self }
@@ -1000,6 +1001,7 @@ where
     /// `get` should be preferred.
     ///
     /// Immutable raw entries have very limited use; you might instead want `raw_entry_mut`.
+    #[inline]
     pub fn raw_entry(&self) -> RawEntryBuilder<K, V, S> {
         RawEntryBuilder { map: self }
     }
@@ -1290,6 +1292,7 @@ where
     K: Eq + Hash,
 {
     /// Create a `RawEntryMut` from the given key.
+    #[inline]
     pub fn from_key<Q: ?Sized>(self, k: &Q) -> RawEntryMut<'a, K, V, S>
     where
         K: Borrow<Q>,
@@ -1301,6 +1304,7 @@ where
     }
 
     /// Create a `RawEntryMut` from the given key and its hash.
+    #[inline]
     pub fn from_key_hashed_nocheck<Q: ?Sized>(self, hash: u64, k: &Q) -> RawEntryMut<'a, K, V, S>
     where
         K: Borrow<Q>,
@@ -1309,6 +1313,7 @@ where
         self.from_hash(hash, |q| q.borrow().eq(k))
     }
 
+    #[inline]
     fn search<F>(self, hash: u64, mut is_match: F) -> RawEntryMut<'a, K, V, S>
     where
         for<'b> F: FnMut(&'b K) -> bool,
@@ -1326,6 +1331,7 @@ where
     }
 
     /// Create a `RawEntryMut` from the given hash.
+    #[inline]
     pub fn from_hash<F>(self, hash: u64, is_match: F) -> RawEntryMut<'a, K, V, S>
     where
         for<'b> F: FnMut(&'b K) -> bool,
@@ -1336,6 +1342,7 @@ where
     /// Search possible locations for an element with hash `hash` until `is_match` returns true for
     /// one of them. There is no guarantee that all keys passed to `is_match` will have the provided
     /// hash.
+    #[inline]
     pub fn search_bucket<F>(self, hash: u64, is_match: F) -> RawEntryMut<'a, K, V, S>
     where
         for<'b> F: FnMut(&'b K) -> bool,
@@ -1349,6 +1356,7 @@ where
     S: BuildHasher,
 {
     /// Access an entry by key.
+    #[inline]
     pub fn from_key<Q: ?Sized>(self, k: &Q) -> Option<(&'a K, &'a V)>
     where
         K: Borrow<Q>,
@@ -1360,6 +1368,7 @@ where
     }
 
     /// Access an entry by a key and its hash.
+    #[inline]
     pub fn from_key_hashed_nocheck<Q: ?Sized>(self, hash: u64, k: &Q) -> Option<(&'a K, &'a V)>
     where
         K: Borrow<Q>,
@@ -1368,6 +1377,7 @@ where
         self.from_hash(hash, |q| q.borrow().eq(k))
     }
 
+    #[inline]
     fn search<F>(self, hash: u64, mut is_match: F) -> Option<(&'a K, &'a V)>
     where
         F: FnMut(&K) -> bool,
@@ -1382,6 +1392,7 @@ where
     }
 
     /// Access an entry by hash.
+    #[inline]
     pub fn from_hash<F>(self, hash: u64, is_match: F) -> Option<(&'a K, &'a V)>
     where
         F: FnMut(&K) -> bool,
@@ -1392,6 +1403,7 @@ where
     /// Search possible locations for an element with hash `hash` until `is_match` returns true for
     /// one of them. There is no guarantee that all keys passed to `is_match` will have the provided
     /// hash.
+    #[inline]
     pub fn search_bucket<F>(self, hash: u64, is_match: F) -> Option<(&'a K, &'a V)>
     where
         F: FnMut(&K) -> bool,
@@ -1417,6 +1429,7 @@ impl<'a, K, V, S> RawEntryMut<'a, K, V, S> {
     /// *map.raw_entry_mut().from_key("poneyland").or_insert("poneyland", 10).1 *= 2;
     /// assert_eq!(map["poneyland"], 6);
     /// ```
+    #[inline]
     pub fn or_insert(self, default_key: K, default_val: V) -> (&'a mut K, &'a mut V)
     where
         K: Hash,
@@ -1444,6 +1457,7 @@ impl<'a, K, V, S> RawEntryMut<'a, K, V, S> {
     ///
     /// assert_eq!(map["poneyland"], "hoho".to_string());
     /// ```
+    #[inline]
     pub fn or_insert_with<F>(self, default: F) -> (&'a mut K, &'a mut V)
     where
         F: FnOnce() -> (K, V),
@@ -1481,6 +1495,7 @@ impl<'a, K, V, S> RawEntryMut<'a, K, V, S> {
     ///    .or_insert("poneyland", 0);
     /// assert_eq!(map["poneyland"], 43);
     /// ```
+    #[inline]
     pub fn and_modify<F>(self, f: F) -> Self
     where
         F: FnOnce(&mut K, &mut V),
@@ -1500,38 +1515,45 @@ impl<'a, K, V, S> RawEntryMut<'a, K, V, S> {
 
 impl<'a, K, V> RawOccupiedEntryMut<'a, K, V> {
     /// Gets a reference to the key in the entry.
+    #[inline]
     pub fn key(&self) -> &K {
         unsafe { &self.elem.as_ref().0 }
     }
 
     /// Gets a mutable reference to the key in the entry.
+    #[inline]
     pub fn key_mut(&mut self) -> &mut K {
         unsafe { &mut self.elem.as_mut().0 }
     }
 
     /// Converts the entry into a mutable reference to the key in the entry
     /// with a lifetime bound to the map itself.
+    #[inline]
     pub fn into_key(self) -> &'a mut K {
         unsafe { &mut self.elem.as_mut().0 }
     }
 
     /// Gets a reference to the value in the entry.
+    #[inline]
     pub fn get(&self) -> &V {
         unsafe { &self.elem.as_ref().1 }
     }
 
     /// Converts the OccupiedEntry into a mutable reference to the value in the entry
     /// with a lifetime bound to the map itself.
+    #[inline]
     pub fn into_mut(self) -> &'a mut V {
         unsafe { &mut self.elem.as_mut().1 }
     }
 
     /// Gets a mutable reference to the value in the entry.
+    #[inline]
     pub fn get_mut(&mut self) -> &mut V {
         unsafe { &mut self.elem.as_mut().1 }
     }
 
     /// Gets a reference to the key and value in the entry.
+    #[inline]
     pub fn get_key_value(&mut self) -> (&K, &V) {
         unsafe {
             let &(ref key, ref value) = self.elem.as_ref();
@@ -1540,6 +1562,7 @@ impl<'a, K, V> RawOccupiedEntryMut<'a, K, V> {
     }
 
     /// Gets a mutable reference to the key and value in the entry.
+    #[inline]
     pub fn get_key_value_mut(&mut self) -> (&mut K, &mut V) {
         unsafe {
             let &mut (ref mut key, ref mut value) = self.elem.as_mut();
@@ -1549,6 +1572,7 @@ impl<'a, K, V> RawOccupiedEntryMut<'a, K, V> {
 
     /// Converts the OccupiedEntry into a mutable reference to the key and value in the entry
     /// with a lifetime bound to the map itself.
+    #[inline]
     pub fn into_key_value(self) -> (&'a mut K, &'a mut V) {
         unsafe {
             let &mut (ref mut key, ref mut value) = self.elem.as_mut();
@@ -1557,21 +1581,25 @@ impl<'a, K, V> RawOccupiedEntryMut<'a, K, V> {
     }
 
     /// Sets the value of the entry, and returns the entry's old value.
+    #[inline]
     pub fn insert(&mut self, value: V) -> V {
         mem::replace(self.get_mut(), value)
     }
 
     /// Sets the value of the entry, and returns the entry's old value.
+    #[inline]
     pub fn insert_key(&mut self, key: K) -> K {
         mem::replace(self.key_mut(), key)
     }
 
     /// Takes the value out of the entry, and returns it.
+    #[inline]
     pub fn remove(self) -> V {
         self.remove_entry().1
     }
 
     /// Take the ownership of the key and value from the map.
+    #[inline]
     pub fn remove_entry(self) -> (K, V) {
         unsafe {
             self.table.erase_no_drop(&self.elem);
@@ -1583,6 +1611,7 @@ impl<'a, K, V> RawOccupiedEntryMut<'a, K, V> {
 impl<'a, K, V, S> RawVacantEntryMut<'a, K, V, S> {
     /// Sets the value of the entry with the VacantEntry's key,
     /// and returns a mutable reference to it.
+    #[inline]
     pub fn insert(self, key: K, value: V) -> (&'a mut K, &'a mut V)
     where
         K: Hash,
@@ -1595,6 +1624,7 @@ impl<'a, K, V, S> RawVacantEntryMut<'a, K, V, S> {
 
     /// Sets the value of the entry with the VacantEntry's key,
     /// and returns a mutable reference to it.
+    #[inline]
     pub fn insert_hashed_nocheck(self, hash: u64, key: K, value: V) -> (&'a mut K, &'a mut V)
     where
         K: Hash,
