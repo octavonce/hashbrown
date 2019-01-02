@@ -18,8 +18,10 @@ use core::marker::PhantomData;
 use core::mem;
 use core::ops::Index;
 use raw::{Bucket, RawDrain, RawIntoIter, RawIter, RawTable};
+use quickcheck::Arbitrary;
 
 pub use fx::FxHashBuilder as DefaultHashBuilder;
+
 
 /// A hash map implemented with quadratic probing and SIMD lookup.
 ///
@@ -981,6 +983,30 @@ where
     #[inline]
     fn index(&self, key: &Q) -> &V {
         self.get(key).expect("no entry found for key")
+    }
+}
+
+use alloc::boxed::Box;
+
+impl<K, V, S> Arbitrary for HashMap<K, V, S>
+where
+    K: Arbitrary + Eq + Hash,
+    V: Arbitrary,
+    S: BuildHasher + Default + Clone + Send + 'static,
+{
+    fn arbitrary<G : quickcheck::Gen>(g: &mut G) -> Self {
+        use alloc::vec::Vec;
+
+        let kvs: Vec<(K, V)> = Arbitrary::arbitrary(g);
+        kvs.into_iter().collect()
+    }
+
+    fn shrink(&self) -> Box<Iterator<Item=Self>> {
+        use alloc::vec::Vec;
+        
+        let vec: Vec<(K, V)> = self.clone().into_iter().collect();
+        Box::new(vec.shrink()
+                    .map(|v| v.into_iter().collect::<Self>()))
     }
 }
 
